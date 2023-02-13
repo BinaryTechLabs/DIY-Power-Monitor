@@ -1,0 +1,69 @@
+# Use this yaml if you are specifying the voltage level
+# Don't forget to update your sercrets.yaml file for all the !secret values
+# This config is valid as of ESPHome Version: 2022.11.3 if you are using a later version you may have to update this config
+
+# https://esphome.io/guides/configuration-types.html#substitutions
+# You should only have to change these values
+substitutions:
+  devicename: ct-sensor
+  voltage: "120"
+  update_interval: 10s
+
+esphome:
+  name: $devicename
+
+esp8266:
+  board: d1_mini
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key
+
+# Required for Over The Air updates
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${devicename} Fallback Hotspot"
+    password: !secret ap_password
+
+# Required for fallback hotspot
+captive_portal:
+
+sensor:
+  # https://esphome.io/components/sensor/ct_clamp.html?
+  - platform: ct_clamp
+    sensor: adc_sensor
+    name: "Measured Current"
+    icon: "mdi:sine-wave"
+    # You can play around with this number, the lower it is the more data points you will get
+    update_interval: $update_interval
+    unit_of_measurement: "W"
+    # Manually set the number of decimals to use when reporting values. This does not impact the actual
+    # value reported to Home Assistant, it just sets the number of decimals to use when displaying it.
+    accuracy_decimals: 0
+    # This sensor needs calibration to show correct values. https://esphome.io/components/sensor/index.html#calibrate-linear
+    filters:
+      - calibrate_linear:
+          # Measured value of 0 maps to 0A
+          - 0 -> 0
+          # Known load: 4.0A
+          # Value shown in logs: 0.1333A
+          - 0.1333 -> 4.0
+      # https://esphome.io/components/sensor/index.html#lambda
+      - lambda: if (x >= 0.01) return x * $voltage;
+          else return {0};
+
+  # Voltage source sensor. Read about it here: https://github.com/Mottramlabs/MQTT-Power-Sensor#esp8266---power-sensor-using-a-wemos-d1-mini
+  - platform: adc
+    pin: A0
+    id: adc_sensor
