@@ -10,6 +10,7 @@ substitutions:
   update_interval: 10s
   uart_tx_pin: D1
   uart_rx_pin: D2
+  energyname: name
 
 esphome:
   name: $devicename
@@ -47,6 +48,9 @@ sensor:
     sensor: adc_sensor
     name: "Measured Current"
     icon: "mdi:sine-wave"
+    # Energy monitoring info
+    id: energy_$energyname
+    device_class: energy 
     # You can play around with this number, the lower it is the more data points you will get
     update_interval: $update_interval
     unit_of_measurement: "W"
@@ -69,6 +73,11 @@ sensor:
   - platform: adc
     pin: A0
     id: adc_sensor
+    
+  # Total Daily Energy Sensor. https://esphome.io/components/sensor/total_daily_energy.html
+  - platform: total_daily_energy
+    name: "Energy Usage $energyname"
+    power_id: energy_$energyname
 
 # https://esphome.io/components/sensor/pzem004t.html#peacefair-pzem-004t-energy-monitor or
 # https://esphome.io/components/sensor/pzemac.html#peacefair-pzem-004t-v3-energy-monitor
@@ -82,3 +91,8 @@ uart:
   tx_pin: $uart_tx_pin
   rx_pin: $uart_rx_pin
   baud_rate: 9600
+
+# Enable time component to reset energy at midnight
+time:
+  - platform: sntp
+    id: my_time
