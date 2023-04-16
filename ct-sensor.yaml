@@ -8,6 +8,7 @@ substitutions:
   devicename: ct-sensor
   voltage: "120"
   update_interval: 10s
+  energyname: name
 
 esphome:
   name: $devicename
@@ -45,6 +46,9 @@ sensor:
     sensor: adc_sensor
     name: "Measured Current"
     icon: "mdi:sine-wave"
+    # Energy monitoring info
+    id: energy_$energyname
+    device_class: energy 
     # You can play around with this number, the lower it is the more data points you will get
     update_interval: $update_interval
     unit_of_measurement: "W"
@@ -67,3 +71,13 @@ sensor:
   - platform: adc
     pin: A0
     id: adc_sensor
+    
+  # Total Daily Energy Sensor. https://esphome.io/components/sensor/total_daily_energy.html
+  - platform: total_daily_energy
+    name: "Energy Usage $energyname"
+    power_id: energy_$energyname
+
+# Enable time component to reset energy at midnight
+time:
+  - platform: sntp
+    id: my_time
